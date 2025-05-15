@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="nl">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Truth Seekers</title>
+  <title>Truth Seekers - CTRL+P</title>
   <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700&family=Outfit:wght@400;700&display=swap" rel="stylesheet">
   <style>
     body {
@@ -16,6 +16,7 @@
       align-items: center;
       justify-content: center;
       overflow: hidden;
+      color: white;
     }
 
     .screen {
@@ -27,14 +28,17 @@
       align-items: center;
       justify-content: center;
       transition: opacity 1s ease;
+      text-align: center;
+      padding: 20px;
+      box-sizing: border-box;
     }
 
     #startScreen {
-      z-index: 2;
-      background: inherit;
+      z-index: 10;
+      background: inherit; /* Ensure it covers underlying screens during transition */
     }
 
-    #mainMenu, #loadingScreen, #lobbyScreen, #roleScreen, #turnScreen { /* Added #turnScreen here */
+    #nameInputScreen, #roleInstructionScreen, #turnScreen, #questionScreen, #resultScreen, #gameOverScreen {
       z-index: 1;
       opacity: 0;
       pointer-events: none;
@@ -46,384 +50,561 @@
       margin-bottom: 20px;
     }
 
-    input {
+    input[type="text"] {
       padding: 12px 20px;
       border-radius: 25px;
       border: none;
       text-align: center;
-      width: 70%;
+      width: 80%;
       max-width: 300px;
       font-size: 1rem;
       margin-top: 10px;
+      margin-bottom: 10px;
     }
 
     button {
-      margin-top: 20px;
+      margin-top: 15px;
       padding: 12px 24px;
       border-radius: 20px;
       border: none;
       font-size: 1rem;
       background: white;
+      color: #333;
       font-family: 'Outfit', sans-serif;
       cursor: pointer;
-    }
-    
-    /* Styles for the Turn Screen elements */
-    #turnMessageContainer {
-      position: relative; /* Needed for animation */
-      transition: top 0.5s ease-out; /* Smooth transition for moving up */
+      transition: background-color 0.3s ease;
     }
 
-    #turnMessageContainer.move-up {
-      top: -30px; /* Move up by 30px */
+    button:hover {
+        background-color: #f0f0f0;
     }
 
-    #turnActions {
-      margin-top: 40px; /* Space below the text */
+    button:disabled {
+        background-color: #ccc;
+        cursor: not-allowed;
     }
 
-    #votingButtons, #feedbackText {
-        margin-top: 20px;
-        text-align: center;
-    }
-
-    #votingButtons button {
-        margin: 0 10px; /* Space between vote buttons */
-    }
-
-    #feedbackText {
-        font-size: 1.5rem;
-        font-weight: bold;
-    }
-
-    .correct-feedback { color: lightgreen; }
-    .wrong-feedback { color: orange; }
-
-
-    p {
-      color: white;
-      font-weight: 300;
-      margin: 10px 0 0;
-    }
-
-    #joinBtn {
-      display: none;
-    }
-
-
-    #loadingScreen::after {
-      content: "";
-      margin-top: 20px;
-      width: 40px;
-      height: 40px;
-      border: 5px solid white;
-      border-top-color: transparent;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-      to {
-        transform: rotate(360deg);
-      }
+    h1, h2 {
+        font-family: 'Unbounded', sans-serif;
     }
 
     ul {
       list-style: none;
       padding: 0;
+      width: 80%;
+      max-width: 300px;
     }
 
-    #roleText {
-      font-weight: bold;
-      color: red;
-      font-size: 2rem; /* Make it a bit bigger */
-      margin-top: 5px;
+    li {
+      background-color: rgba(255,255,255,0.2);
+      padding: 8px;
+      margin-bottom: 5px;
+      border-radius: 10px;
     }
+
+    #playerInputsContainer input {
+        margin-bottom: 5px;
+    }
+    #playerInputsContainer button {
+        font-size: 0.9rem;
+        padding: 8px 16px;
+        margin-left: 5px;
+    }
+    .player-input-group {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 5px;
+    }
+    .player-input-group input {
+        flex-grow: 1;
+        margin-right: 5px; /* Space between input and remove button */
+    }
+
   </style>
 </head>
 <body>
 
-
   <div id="startScreen" class="screen">
     <img src="Truth_seekers_logo.png" alt="Truth Seekers Logo" class="logo-img">
+    <h1>CTRL+P</h1>
+    <p>Ontmasker de Fakemaker!</p>
   </div>
 
-
-  <div id="mainMenu" class="screen">
-    <img src="Truth_seekers_logo.png" alt="Truth Seekers Logo" class="logo-img">
-    <p>enter game code</p>
-    <input type="text" id="codeInput" placeholder="Game Code" />
-    <button id="joinBtn" onclick="joinGame()">join game</button>
-    <button onclick="createGame()">create new game</button>
+  <div id="nameInputScreen" class="screen">
+    <h2>Spelersnamen Invoeren</h2>
+    <p>Voer 3 tot 6 spelersnamen in.</p>
+    <div id="playerInputsContainer">
+      <!-- Input fields will be added here by JavaScript -->
+    </div>
+    <button id="addPlayerBtn">Voeg Speler Toe</button>
+    <button id="startGameBtn">Start Spel</button>
+    <p id="playerCountError" style="color: orange; display: none;">Minimaal 3 en maximaal 6 spelers.</p>
   </div>
 
-
-  <div id="loadingScreen" class="screen">
-    <p style="color: white; font-size: 1.5rem;">Bezig met spel aanmaken...</p>
+  <div id="roleInstructionScreen" class="screen">
+    <h2>Rollen Bekendmaken</h2>
+    <p>Spelers, bekijk jullie fysieke rolkaarten. De Fakemaker probeert onontdekt te blijven!</p>
+    <p>Het spel wordt doorgegeven. De eerste speler is aan de beurt.</p>
+    <button id="understoodBtn">Begrepen! Start Beurt</button>
   </div>
 
-
-  <div id="lobbyScreen" class="screen">
-    <h2 style="color:white;">Wachtlobby</h2>
-    <p id="lobbyCode" style="color:white; font-size: 1.2rem;"></p>
-    <p id="playerCount" style="color:white; font-size: 1rem;">Spelers: 0/6</p>
-    <ul id="playerList" style="color:white;"></ul>
-    <button onclick="startGame()">Start Game</button>
-  </div>
-
-  <!-- New Role Screen -->
-  <div id="roleScreen" class="screen">
-    <h2 id="playerNameForRole" style="color:white;"></h2>
-    <p style="color:white; font-size: 1.2rem;">you're a</p>
-    <p id="roleText"></p>
-    <!-- You might want a button here to proceed to the actual game later -->
-    <!-- <button onclick="proceedToGame()">Continue</button> -->
-  </div>
-
-  <!-- New Turn Screen -->
   <div id="turnScreen" class="screen">
-    <div id="turnMessageContainer">
-      <h2 id="turnMessage" style="color:white; font-size: 1.8rem; text-align: center;"></h2>
-    </div>
-    <div id="turnActions" style="display: flex; flex-direction: column; align-items: center; gap: 20px; opacity: 0; pointer-events: none; transition: opacity 0.5s ease;">
-      <!-- Camera Icon (Placeholder - replace with actual icon/image) -->
-      <button id="scanButton" onclick="scanQrCode()" style="background: none; border: none; cursor: pointer; padding: 0; margin: 0;"><img src="camera_icon.png" alt="Scan QR" style="width: 50px; height: 50px; filter: invert(1);"></button>
+    <h2 id="currentPlayerTurnText"></h2>
+    <div style="display: none;">
+        <p>Jouw rol: <strong id="currentPlayerRoleText"></strong></p>
+        <p>Antwoord op vraag <strong id="currentQuestionNumberText"></strong>: <strong id="currentQuestionAnswerText"></strong></p>
+        <p style="font-size:0.8em;">(Deze informatie is alleen voor jou! Geef het toestel daarna door.)</p>
+    </div>  
+    <button id="showQuestionBtn">Toon Vraag</button>
+  </div>
 
-      
-      <div id="votingButtons" style="display: block;">
-          <button onclick="handleVote('Real')">Real</button>
-          <button onclick="handleVote('Fake')">Fake</button>
-      </div>
-      <!-- Feedback Text (Initially hidden) -->
-      <p id="feedbackText" style="display: none;"></p>
-
-      <!-- Next Player Button -->
-      <button onclick="nextPlayer()">Volgende Speler</button>
+  <div id="questionScreen" class="screen">
+    <h3 id="questionNumberDisplay">Vraag X</h3>
+    <p id="questionContentDisplay">Dit is de vraag...</p>
+    <!-- Video / External Action elements will be added here if needed -->
+    <div id="answerButtons">
+        <button onclick="submitAnswer(true)">Waar</button>
+        <button onclick="submitAnswer(false)">Fout</button>
     </div>
+  </div>
+
+  <div id="resultScreen" class="screen">
+    <h2 id="resultTitle"></h2>
+    <p id="resultFeedback"></p>
+    <p id="fakemakerStatus"></p>
+    <button id="nextTurnBtn">Volgende Speler</button>
+    <button id="attemptUnmaskBtn">Ontmasker Fakemaker?</button> 
+  </div>
+
+  <div id="gameOverScreen" class="screen">
+    <h2>Spel Voorbij!</h2>
+    <p id="gameOverReason"></p>
+    <button onclick="restartGame()">Nieuw Spel</button>
   </div>
 
   <script>
-    let currentGameCode = "";
-    let isHost = false;
-    let currentPlayersInLobby = []; // To store players locally
-    let currentTurnCorrectAnswer = null; // To store if the scanned item was Real or Fake
+    // Game State Variables
+    let gameState = {
+        players: [], // {name: "Speler1", role: "Factchecker", position: 0, isFakemakerRevealedThisTurn: false}
+        currentPlayerIndex: 0,
+        currentQuestionId: 0,
+        fakemakerUnmasked: false,
+        gamePhase: "setup", // "setup", "nameInput", "roleReveal", "turnStart", "questionDisplay", "answerResult", "gameOver"
+        fakemakerName: null,
+        questions: []
+    };
 
+    const MIN_PLAYERS = 3;
+    const MAX_PLAYERS = 6;
+
+    // DOM Elements
+    const startScreen = document.getElementById('startScreen');
+    const nameInputScreen = document.getElementById('nameInputScreen');
+    const playerInputsContainer = document.getElementById('playerInputsContainer');
+    const addPlayerBtn = document.getElementById('addPlayerBtn');
+    const startGameBtn = document.getElementById('startGameBtn');
+    const playerCountError = document.getElementById('playerCountError');
     
-    setTimeout(() => {
-      showScreen("mainMenu");
-    }, 5000);
+    const roleInstructionScreen = document.getElementById('roleInstructionScreen');
+    const understoodBtn = document.getElementById('understoodBtn');
 
-    const codeInput = document.getElementById('codeInput');
-    const joinBtn = document.getElementById('joinBtn');
+    const turnScreen = document.getElementById('turnScreen');
+    const currentPlayerTurnText = document.getElementById('currentPlayerTurnText');
+    const currentPlayerRoleText = document.getElementById('currentPlayerRoleText');
+    const currentQuestionNumberText = document.getElementById('currentQuestionNumberText');
+    const currentQuestionAnswerText = document.getElementById('currentQuestionAnswerText');
+    const showQuestionBtn = document.getElementById('showQuestionBtn');
 
-    const specificNamesPool = ["Justine", "Marine", "Jorien", "Elsy", "Lisse"];
+    const questionScreen = document.getElementById('questionScreen');
+    const questionNumberDisplay = document.getElementById('questionNumberDisplay');
+    const questionContentDisplay = document.getElementById("questionContentDisplay");
+    const answerButtons = document.getElementById("answerButtons");
 
+    const resultScreen = document.getElementById("resultScreen");
+    const resultTitle = document.getElementById("resultTitle");
+    const resultFeedback = document.getElementById("resultFeedback");
+    const fakemakerStatus = document.getElementById("fakemakerStatus");
+    const nextTurnBtn = document.getElementById("nextTurnBtn");
+    const attemptUnmaskBtn = document.getElementById("attemptUnmaskBtn");
 
-    function shuffleArray(array) {
-        for (let i = array.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [array[i], array[j]] = [array[j], array[i]]; 
-        }
-        return array;
-    }
+    const gameOverScreen = document.getElementById("gameOverScreen");
+    const gameOverReason = document.getElementById("gameOverReason");
 
-
-    codeInput.addEventListener('input', () => {
-      joinBtn.style.display = codeInput.value.trim() !== '' ? 'inline-block' : 'none';
-    });
-
-    function generateGameCode() {
-      const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-      let code = "";
-      for (let i = 0; i < 5; i++) {
-        code += chars.charAt(Math.floor(Math.random() * chars.length));
-      }
-      return code;
-    }
-
-    function createGame() {
-      const hostName = prompt("Wat is je naam?");
-      if (!hostName) return;
-
-      showScreen("loadingScreen");
-
-      const code = generateGameCode();
-      currentGameCode = code;
-      isHost = true;
-      currentPlayersInLobby = [hostName];
-
-      
-      const shuffledNames = shuffleArray([...specificNamesPool]);
-
-      
-      const namesToAddCount = Math.min(5, shuffledNames.length);
-      for (let i = 0; i < namesToAddCount; i++) {
-          currentPlayersInLobby.push(shuffledNames[i]);
-      }
-
-      
-      setTimeout(() => {
-        showLobby(code, currentPlayersInLobby);
-      }, 500); 
-    }
-
-    async function showLobby(code, players) { 
-      showScreen("lobbyScreen"); 
-      document.getElementById("lobbyCode").textContent = "Spelcode: " + code;
-
-      const playerListEl = document.getElementById("playerList");
-      const playerCountEl = document.getElementById("playerCount");
-
-      playerListEl.innerHTML = ""; 
-      playerCountEl.textContent = `Spelers: 0/6`; 
-     
-      const delay = ms => new Promise(res => setTimeout(res, ms)); // Helper for delay
-
-      let currentDisplayedPlayers = 0;
-      for (const name of players) {
-        const li = document.createElement("li");
-        li.textContent = name;
-        playerListEl.appendChild(li);
-
-        currentDisplayedPlayers++;
-        playerCountEl.textContent = `Spelers: ${currentDisplayedPlayers}/6`; 
-
-        await delay(2000); 
-      }
-    }
-
-    function showScreen(idToShow) {
-      const screens = document.querySelectorAll('.screen');
-      screens.forEach(screen => {
-        screen.style.opacity = '0';
-        screen.style.pointerEvents = 'none';
-      });
-
-      const active = document.getElementById(idToShow);
-      active.style.opacity = '1';
-      active.style.pointerEvents = 'auto';
-    }
-
-    function startGame() {
-      if (!isHost) return alert("Alleen de host kan het spel starten.");
-      
-      if (currentPlayersInLobby.length < 2) {
-        return alert("Minimaal 2 spelers zijn nodig om het spel te starten.");
-      }
-
-      // Assign roles
-      const playersWithRoles = currentPlayersInLobby.map(name => ({ name: name, role: "Factchecker" }));
-
-      // Randomly select one player to be the Fakemaker
-      const fakemakerIndex = Math.floor(Math.random() * playersWithRoles.length);
-      playersWithRoles[fakemakerIndex].role = "Fakemaker";
-
-      // Find the host's role
-      const hostPlayer = playersWithRoles.find(player => player.name === currentPlayersInLobby[0]); // Assuming the host is always the first in the list
-      const hostRole = hostPlayer ? hostPlayer.role : "Unknown";
-
-      // Log all roles (for debugging/checking)
-      console.log("Assigned Roles:", playersWithRoles);
-
-      // Populate and show the role screen
-      document.getElementById('playerNameForRole').textContent = hostPlayer.name;
-      document.getElementById('roleText').textContent = hostRole;
-      showScreen("roleScreen");
-
-      // Get references to the new turn screen elements
-      const turnMessageContainer = document.getElementById('turnMessageContainer');
-      const turnMessageEl = document.getElementById('turnMessage');
-      const turnActionsEl = document.getElementById('turnActions');
-      const scanButtonEl = document.getElementById('scanButton');
-      const votingButtonsEl = document.getElementById('votingButtons');
-      const feedbackTextEl = document.getElementById('feedbackText');
-      const nextPlayerButtonEl = document.getElementById('turnActions').querySelector('button:last-child'); // Get the "Volgende Speler" button
-
-      // After 5 seconds, proceed to the turn screen
-      setTimeout(() => {
-        if (currentPlayersInLobby.length > 0) {
-          const startingPlayerName = currentPlayersInLobby[0]; // The host (first player) starts by default
-          document.getElementById('turnMessage').textContent = `${startingPlayerName} is aan de beurt`;
-          showScreen("turnScreen");
+    // --- Utility Functions ---
+    function showScreen(screenId) {
+        const screens = document.querySelectorAll('.screen');
+        screens.forEach(screen => {
+            screen.style.opacity = '0';
+            screen.style.pointerEvents = 'none';
+        });
+        const activeScreen = document.getElementById(screenId);
+        if (activeScreen) {
+            activeScreen.style.opacity = '1';
+            activeScreen.style.pointerEvents = 'auto';
         } else {
-          console.error("No players in lobby to start the turn.");
-          showScreen("mainMenu"); // Fallback if something went wrong
+            console.error("Screen not found: ", screenId);
         }
-      }, 5000); // 5000 milliseconds = 5 seconds
-
-      // Reset turn screen state for the new turn
-      scanButtonEl.style.display = 'block'; // Show camera button
-      votingButtonsEl.style.display = 'none'; // Hide voting buttons
-      feedbackTextEl.style.display = 'none'; // Hide feedback text
-      nextPlayerButtonEl.style.display = 'none'; // Hide next player button initially
-
-      // After showing the turn screen, wait a bit, animate the text, then show the actions
-      // This setTimeout runs *after* the first one has potentially shown the screen
-      // A better approach might be to chain these or use async/await in a dedicated function
-      // For simplicity now, we'll add another timeout that assumes the screen is visible
-      setTimeout(() => {
-          // Add class to trigger move-up animation
-          turnMessageContainer.classList.add('move-up');
-
-          // After animation duration, make actions visible
-          setTimeout(() => {
-              turnActionsEl.style.opacity = '1';
-              turnActionsEl.style.pointerEvents = 'auto';
-              // Only show the scan button initially within actions
-              scanButtonEl.style.display = 'block';
-              votingButtonsEl.style.display = 'none';
-              feedbackTextEl.style.display = 'none';
-              nextPlayerButtonEl.style.display = 'none'; // Ensure next player button is hidden
-          }, 500); // Match the CSS transition duration (0.5s)
-
-      }, 5500); // Start this sequence 5.5 seconds after startGame was called (0.5s after turnScreen is shown)
     }
 
-    // --- Game Turn Logic ---
-
-    function scanQrCode() {
-        console.log("Scan QR Code clicked! (Simulating scan)");
-
-        // TODO: Replace with actual camera/QR scanning logic
-        // For now, simulate determining if it's Real or Fake
-        const isReal = Math.random() < 0.5; // 50% chance it's Real
-        currentTurnCorrectAnswer = isReal ? 'Real' : 'Fake';
-        console.log("Simulated scan result:", currentTurnCorrectAnswer);
-
-        // Hide scan button, show voting buttons
-        document.getElementById('scanButton').style.display = 'none';
-        const votingButtonsDiv = document.getElementById('votingButtons');
-        votingButtonsDiv.style.display = 'flex'; // Make the container a flex container
-        votingButtonsDiv.style.alignItems = 'center'; // Vertically align buttons in the center of the line
-        votingButtonsDiv.style.justifyContent = 'center'; // Center the buttons within the container
-        document.getElementById('feedbackText').style.display = 'none'; // Hide feedback if it was visible
-        document.getElementById('turnActions').querySelector('button:last-child').style.display = 'none'; // Hide Next Player button
+    function saveGameState() {
+        localStorage.setItem('ctrlPGameState', JSON.stringify(gameState));
     }
 
-    function handleVote(playerVote) {
-        console.log("Player voted:", playerVote);
-
-        const feedbackTextEl = document.getElementById('feedbackText');
-        const nextPlayerButtonEl = document.getElementById('turnActions').querySelector('button:last-child');
-
-        // Determine if the vote was correct
-        const isCorrect = (playerVote === currentTurnCorrectAnswer);
-
-        // Display feedback
-        feedbackTextEl.textContent = isCorrect ? "ga 1 stap vooruit" : "ga 3 stappen terug";
-        feedbackTextEl.className = isCorrect ? 'correct-feedback' : 'wrong-feedback'; // Add class for color
-        feedbackTextEl.style.display = 'block'; // Show feedback text
-
-        // Hide voting buttons and show Next Player button
-        document.getElementById('votingButtons').style.display = 'none';
-        nextPlayerButtonEl.style.display = 'block'; // Show Next Player button
+    function loadGameState() {
+        const savedState = localStorage.getItem('ctrlPGameState');
+        if (savedState) {
+            gameState = JSON.parse(savedState);
+            return true;
+        }
+        return false;
     }
-    function joinGame() {
-      const code = codeInput.value.trim().toUpperCase();
-      const name = prompt("Wat is je naam?");
-      if (!code || !name) return alert("Vul een geldige code en naam in.");
+
+    // --- Player Name Input Logic ---
+    function updatePlayerInputs() {
+        playerInputsContainer.innerHTML = '';
+        gameState.players.forEach((player, index) => {
+            const group = document.createElement('div');
+            group.className = 'player-input-group';
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.placeholder = `Naam Speler ${index + 1}`;
+            input.value = player.name;
+            input.onchange = (e) => {
+                gameState.players[index].name = e.target.value.trim();
+                validatePlayerCount();
+            };
+            group.appendChild(input);
+
+            if (gameState.players.length > MIN_PLAYERS) {
+                const removeBtn = document.createElement('button');
+                removeBtn.textContent = 'X';
+                removeBtn.onclick = () => removePlayer(index);
+                group.appendChild(removeBtn);
+            }
+            playerInputsContainer.appendChild(group);
+        });
+        validatePlayerCount();
     }
+
+    function addPlayer() {
+        if (gameState.players.length < MAX_PLAYERS) {
+            gameState.players.push({ name: '', role: '', position: 0, isFakemakerRevealedThisTurn: false });
+            updatePlayerInputs();
+        }
+        addPlayerBtn.disabled = gameState.players.length >= MAX_PLAYERS;
+    }
+
+    function removePlayer(index) {
+        if (gameState.players.length > MIN_PLAYERS) {
+            gameState.players.splice(index, 1);
+            updatePlayerInputs();
+        }
+        addPlayerBtn.disabled = gameState.players.length >= MAX_PLAYERS;
+    }
+
+    function validatePlayerCount() {
+        const playerCount = gameState.players.filter(p => p.name.trim() !== '').length;
+        const allNamesFilled = gameState.players.every(p => p.name.trim() !== '');
+
+        if (playerCount >= MIN_PLAYERS && playerCount <= MAX_PLAYERS && allNamesFilled) {
+            startGameBtn.disabled = false;
+            playerCountError.style.display = 'none';
+        } else {
+            startGameBtn.disabled = true;
+            if (gameState.players.length > 0) { // Show error only if trying to start or after interaction
+                 playerCountError.style.display = 'block';
+            }
+        }
+        // Disable add button if max players reached
+        addPlayerBtn.disabled = gameState.players.length >= MAX_PLAYERS;
+    }
+
+    // --- Game Initialization and Flow ---
+    async function loadQuestions() {
+        try {
+            const response = await fetch("questions.json");
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            gameState.questions = await response.json();
+            console.log("Questions loaded:", gameState.questions);
+            if (gameState.questions.length === 0) {
+                alert("Geen vragen gevonden in questions.json. Het spel kan niet starten.");
+                return false;
+            }
+            return true;
+        } catch (error) {
+            console.error("Error loading questions:", error);
+            alert("Fout bij het laden van de vragen. Controleer questions.json en probeer opnieuw.");
+            return false;
+        }
+    }
+
+    function assignRoles() {
+        // Reset roles first
+        gameState.players.forEach(player => player.role = 'Factchecker');
+
+        // Assign one Fakemaker randomly
+        const fakemakerIndex = Math.floor(Math.random() * gameState.players.length);
+        gameState.players[fakemakerIndex].role = 'Fakemaker';
+        gameState.fakemakerName = gameState.players[fakemakerIndex].name;
+        console.log("Roles assigned:", gameState.players);
+        console.log("Fakemaker is:", gameState.fakemakerName);
+    }
+
+    function initializeNameInput() {
+        gameState.players = [];
+        for (let i = 0; i < MIN_PLAYERS; i++) {
+            gameState.players.push({ name: '', role: '', position: 0, isFakemakerRevealedThisTurn: false });
+        }
+        updatePlayerInputs();
+        showScreen('nameInputScreen');
+    }
+    
+    startGameBtn.onclick = () => {
+        // Final validation on names, ensure no empty names among the actual player objects
+        gameState.players = gameState.players.filter(p => p.name.trim() !== '');
+        if (gameState.players.length >= MIN_PLAYERS && gameState.players.length <= MAX_PLAYERS) {
+            // Proceed to game setup (role assignment etc.)
+            console.log("Starting game with players:", gameState.players);
+            assignRoles(); // Assign roles to players
+            gameState.gamePhase = "roleReveal";
+            saveGameState();
+            showScreen("roleInstructionScreen"); 
+        } else {
+            // This case should ideally be prevented by button disable, but as a fallback:
+            alert("Zorg ervoor dat alle spelernamen zijn ingevuld en er tussen de 3 en 6 spelers zijn.");
+            // Re-initialize to correct number of input fields if necessary
+            while(gameState.players.length < MIN_PLAYERS) {
+                 gameState.players.push({ name: '', role: '', position: 0, isFakemakerRevealedThisTurn: false });
+            }
+            updatePlayerInputs(); 
+        }
+    };    addPlayerBtn.onclick = addPlayer;
+
+    understoodBtn.onclick = async () => {
+        const questionsLoaded = await loadQuestions();
+        if (!questionsLoaded) {
+            alert("Spel kan niet starten zonder vragen. Controleer de console voor fouten.");
+            // Optionally, go back to a previous screen or show an error message permanently
+            // For now, we'll just prevent moving forward.
+            return;
+        }
+        gameState.gamePhase = "turnStart";
+        gameState.currentPlayerIndex = 0; // First player starts
+        gameState.currentQuestionId = 0; // Start with the first question
+        startNextTurn();
+    };
+
+    function updateTurnScreen() {
+        if (gameState.players.length === 0 || !gameState.questions || gameState.questions.length === 0) {
+            console.error("Spelers of vragen niet geladen, kan beurtscherm niet bijwerken.");
+            // Potentially redirect to an error state or name input
+            showScreen('nameInputScreen'); // Fallback
+            return;
+        }
+        const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+        // Ensure currentQuestionId is valid for the questions array
+        const questionIndex = gameState.currentQuestionId % gameState.questions.length;
+        const currentQuestion = gameState.questions[questionIndex];
+
+        if (!currentPlayer || !currentQuestion) {
+            console.error("Huidige speler of vraag niet gevonden.", currentPlayer, currentQuestion);
+            showScreen('nameInputScreen'); // Fallback
+            return;
+        }
+
+        currentPlayerTurnText.textContent = `${currentPlayer.name} is aan de beurt`;
+        currentPlayerRoleText.textContent = currentPlayer.role;
+        currentQuestionNumberText.textContent = currentQuestion.id;
+        currentQuestionAnswerText.textContent = currentQuestion.answer ? "Waar" : "Fout";
+    }
+
+    function startNextTurn() {
+        if (gameState.fakemakerUnmasked) {
+            // endGame("Fakemaker ontmaskerd!"); // Implement later
+            alert("Spel is voorbij! Fakemaker is ontmaskerd.");
+            showScreen('gameOverScreen'); // Placeholder
+            return;
+        }
+        // Cycle through questions, or implement other logic for question selection
+        // For now, let's assume we might have more players than questions, so we loop questions
+        gameState.currentQuestionId = gameState.currentPlayerIndex % gameState.questions.length; 
+
+        updateTurnScreen();
+        gameState.gamePhase = "turnStart";
+        saveGameState();
+        showScreen('turnScreen');
+    }
+
+    showQuestionBtn.onclick = () => {
+        gameState.gamePhase = "questionDisplay";
+        displayQuestion();
+        saveGameState();
+        showScreen('questionScreen');
+    };
+
+    function displayQuestion() {
+        const questionIndex = gameState.currentQuestionId % gameState.questions.length;
+        const question = gameState.questions[questionIndex];
+        if (!question) {
+            alert("Fout: Vraag niet gevonden!");
+            startNextTurn(); // Go to next turn or handle error
+            return;
+        }
+        questionNumberDisplay.textContent = `Vraag ${question.id}`;
+        questionContentDisplay.textContent = question.content;
+
+        // Clear previous dynamic content (like videos or QR prompts)
+        const dynamicContentArea = document.getElementById('dynamicQuestionContent');
+        if (dynamicContentArea) {
+            dynamicContentArea.innerHTML = ''; // Clear previous dynamic content
+        } else {
+            // Create a container for dynamic content if it doesn't exist
+            const newDynamicArea = document.createElement('div');
+            newDynamicArea.id = 'dynamicQuestionContent';
+            questionContentDisplay.after(newDynamicArea); // Insert after the main content
+        }
+
+        if (question.type === "video" && question.videoUrl) {
+            const videoEl = document.createElement('video');
+            videoEl.src = question.videoUrl;
+            videoEl.controls = true;
+            videoEl.width = 320; // Example size
+            document.getElementById('dynamicQuestionContent').appendChild(videoEl);
+        } else if (question.type === "external_action" && question.externalActionPrompt) {
+            const promptEl = document.createElement('p');
+            promptEl.textContent = question.externalActionPrompt;
+            // Potentially add a placeholder for a QR code image if one were generated/provided
+            // For now, just the prompt text.
+            document.getElementById('dynamicQuestionContent').appendChild(promptEl);
+        }
+        // Ensure answer buttons are visible
+        answerButtons.style.display = 'block';
+    }
+
+    function restartGame() {
+        localStorage.removeItem('ctrlPGameState');
+        // Reset gameState object to its initial empty/default state
+        gameState = {
+            players: [],
+            currentPlayerIndex: 0,
+            currentQuestionId: 0,
+            fakemakerUnmasked: false,
+            gamePhase: "setup",
+            fakemakerName: null,
+            questions: []
+        };
+        initializeNameInput();
+    }
+
+    // --- Initial Load ---
+    window.onload = () => {
+        // Check if there's a saved game state
+        // For now, we always start fresh for development of player input
+        // if (loadGameState() && gameState.gamePhase !== "gameOver" && gameState.gamePhase !== "setup") {
+        //    // Resume game logic based on gameState.gamePhase
+        //    // For example: if (gameState.gamePhase === "nameInput") initializeNameInput(); else show соответствующий screen
+        //    alert("Spel hervat (logica nog te implementeren).");
+        //    // Potentially call a resumeGame function here
+        //} else {
+            setTimeout(() => {
+                initializeNameInput();
+            }, 2000); // Show start screen for 2 seconds, then player names
+        // }
+        startGameBtn.disabled = true; // Initially disable start button
+    };
+
+    // Placeholder functions for later steps (to avoid errors)
+    // function updateTurnScreen() { console.log("Updating turn screen...");}
+
+    function submitAnswer(playerAnswer) {
+        const questionIndex = gameState.currentQuestionId % gameState.questions.length;
+        const currentQuestion = gameState.questions[questionIndex];
+        const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+
+        if (!currentQuestion || !currentPlayer) {
+            alert("Fout: Kan antwoord niet verwerken. Speler of vraag niet gevonden.");
+            startNextTurn();
+            return;
+        }
+
+        const correctAnswer = currentQuestion.answer;
+        let feedback = "";
+        let title = "";
+
+        if (playerAnswer === correctAnswer) {
+            title = "Correct!";
+            feedback = `${currentPlayer.name} gaat 1 stap vooruit.`;
+            currentPlayer.position += 1;
+        } else {
+            title = "Fout!";
+            const penalty = Math.floor(Math.random() * 5) + 1; // Random penalty between 1 and 5 steps back
+            feedback = `${currentPlayer.name} gaat ${penalty} stap(pen) achteruit.`;
+            currentPlayer.position -= penalty;
+            if (currentPlayer.position < 0) currentPlayer.position = 0; // Cannot go below 0
+        }
+
+        resultTitle.textContent = title;
+        resultFeedback.textContent = feedback;
+        fakemakerStatus.textContent = ""; 
+
+        gameState.gamePhase = "answerResult";
+        saveGameState();
+        showScreen("resultScreen");
+    }
+
+    nextTurnBtn.onclick = () => {
+        gameState.currentPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length;
+        startNextTurn();
+    };
+
+    attemptUnmaskBtn.onclick = () => {
+        const accusedPlayerName = prompt("Wie denk je dat de Fakemaker is? Voer de naam in:");
+        if (accusedPlayerName && accusedPlayerName.trim() !== "") {
+            if (accusedPlayerName.trim().toLowerCase() === gameState.fakemakerName.toLowerCase()) {
+                gameState.fakemakerUnmasked = true;
+                endGame(`De Fakemaker, ${gameState.fakemakerName}, is ontmaskerd! De Factcheckers winnen!`);
+            } else {
+                const playerExists = gameState.players.find(p => p.name.toLowerCase() === accusedPlayerName.trim().toLowerCase());
+                if (playerExists) {
+                    fakemakerStatus.textContent = `${accusedPlayerName} is niet de Fakemaker. Het spel gaat verder.`;
+                    setTimeout(() => {
+                        gameState.currentPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length;
+                        startNextTurn();
+                    }, 2000); 
+                } else {
+                    alert("Speler niet gevonden. Probeer opnieuw.");
+                }
+            }
+        } else {
+            alert("Ongeldige invoer voor beschuldiging.");
+        }
+    };
+
+    function endGame(reason) {
+        gameState.gamePhase = "gameOver";
+        gameOverReason.textContent = reason;
+        saveGameState();
+        showScreen("gameOverScreen");
+    }
+
+    function restartGame() {
+        localStorage.removeItem("ctrlPGameState");
+        // Reset gameState object to its initial empty/default state
+        gameState = {
+            players: [],
+            currentPlayerIndex: 0,
+            currentQuestionId: 0,
+            fakemakerUnmasked: false,
+            gamePhase: "setup",
+            fakemakerName: null,
+            questions: []
+        };
+        initializeNameInput(); // Go back to the name input screen
+    }
+
   </script>
-
 </body>
 </html>

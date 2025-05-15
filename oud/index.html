@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Truth Seekers</title>
+  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700&family=Outfit:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Outfit', sans-serif;
+      height: 100vh;
+      background: linear-gradient(180deg, #4c6ef5, #a29bfe, #ff7675, #ffeaa7, #55efc4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .screen {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 1s ease;
+    }
+
+    #startScreen {
+      z-index: 2;
+      background: inherit;
+    }
+
+    #mainMenu, #loadingScreen, #lobbyScreen, #roleScreen, #turnScreen { /* Added #turnScreen here */
+      z-index: 1;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .logo-img {
+      width: 60%;
+      max-width: 250px;
+      margin-bottom: 20px;
+    }
+
+    input {
+      padding: 12px 20px;
+      border-radius: 25px;
+      border: none;
+      text-align: center;
+      width: 70%;
+      max-width: 300px;
+      font-size: 1rem;
+      margin-top: 10px;
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 12px 24px;
+      border-radius: 20px;
+      border: none;
+      font-size: 1rem;
+      background: white;
+      font-family: 'Outfit', sans-serif;
+      cursor: pointer;
+    }
+    
+    /* Styles for the Turn Screen elements */
+    #turnMessageContainer {
+      position: relative; /* Needed for animation */
+      transition: top 0.5s ease-out; /* Smooth transition for moving up */
+    }
+
+    #turnMessageContainer.move-up {
+      top: -30px; /* Move up by 30px */
+    }
+
+    #turnActions {
+      margin-top: 40px; /* Space below the text */
+    }
+
+    #votingButtons, #feedbackText {
+        margin-top: 20px;
+        text-align: center;
+    }
+
+    #votingButtons button {
+        margin: 0 10px; /* Space between vote buttons */
+    }
+
+    #feedbackText {
+        font-size: 1.5rem;
+        font-weight: bold;
+    }
+
+    .correct-feedback { color: lightgreen; }
+    .wrong-feedback { color: orange; }
+
+
+    p {
+      color: white;
+      font-weight: 300;
+      margin: 10px 0 0;
+    }
+
+    #joinBtn {
+      display: none;
+    }
+
+
+    #loadingScreen::after {
+      content: "";
+      margin-top: 20px;
+      width: 40px;
+      height: 40px;
+      border: 5px solid white;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    #roleText {
+      font-weight: bold;
+      color: red;
+      font-size: 2rem; /* Make it a bit bigger */
+      margin-top: 5px;
+    }
+  </style>
+</head>
+<body>
+
+
+  <div id="startScreen" class="screen">
+    <img src="Truth_seekers_logo.png" alt="Truth Seekers Logo" class="logo-img">
+  </div>
+
+
+  <div id="mainMenu" class="screen">
+    <img src="Truth_seekers_logo.png" alt="Truth Seekers Logo" class="logo-img">
+    <p>enter game code</p>
+    <input type="text" id="codeInput" placeholder="Game Code" />
+    <button id="joinBtn" onclick="joinGame()">join game</button>
+    <button onclick="createGame()">create new game</button>
+  </div>
+
+
+  <div id="loadingScreen" class="screen">
+    <p style="color: white; font-size: 1.5rem;">Bezig met spel aanmaken...</p>
+  </div>
+
+
+  <div id="lobbyScreen" class="screen">
+    <h2 style="color:white;">Wachtlobby</h2>
+    <p id="lobbyCode" style="color:white; font-size: 1.2rem;"></p>
+    <p id="playerCount" style="color:white; font-size: 1rem;">Spelers: 0/6</p>
+    <ul id="playerList" style="color:white;"></ul>
+    <button onclick="startGame()">Start Game</button>
+  </div>
+
+  <!-- New Role Screen -->
+  <div id="roleScreen" class="screen">
+    <h2 id="playerNameForRole" style="color:white;"></h2>
+    <p style="color:white; font-size: 1.2rem;">you're a</p>
+    <p id="roleText"></p>
+    <!-- You might want a button here to proceed to the actual game later -->
+    <!-- <button onclick="proceedToGame()">Continue</button> -->
+  </div>
+
+  <!-- New Turn Screen -->
+  <div id="turnScreen" class="screen">
+    <div id="turnMessageContainer">
+      <h2 id="turnMessage" style="color:white; font-size: 1.8rem; text-align: center;"></h2>
+    </div>
+    <div id="turnActions" style="display: flex; flex-direction: column; align-items: center; gap: 20px; opacity: 0; pointer-events: none; transition: opacity 0.5s ease;">
+      <!-- Camera Icon (Placeholder - replace with actual icon/image) -->
+      <button id="scanButton" onclick="scanQrCode()" style="background: none; border: none; cursor: pointer; padding: 0; margin: 0;"><img src="camera_icon.png" alt="Scan QR" style="width: 50px; height: 50px; filter: invert(1);"></button>
+
+      
+      <div id="votingButtons" style="display: block;">
+          <button onclick="handleVote('Real')">Real</button>
+          <button onclick="handleVote('Fake')">Fake</button>
+      </div>
+      <!-- Feedback Text (Initially hidden) -->
+      <p id="feedbackText" style="display: none;"></p>
+
+      <!-- Next Player Button -->
+      <button onclick="nextPlayer()">Volgende Speler</button>
+    </div>
+  </div>
+
+  <script>
+    let currentGameCode = "";
+    let isHost = false;
+    let currentPlayersInLobby = []; // To store players locally
+    let currentTurnCorrectAnswer = null; // To store if the scanned item was Real or Fake
+
+    
+    setTimeout(() => {
+      showScreen("mainMenu");
+    }, 5000);
+
+    const codeInput = document.getElementById('codeInput');
+    const joinBtn = document.getElementById('joinBtn');
+
+    const specificNamesPool = ["Justine", "Marine", "Jorien", "Elsy", "Lisse"];
+
+
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]]; 
+        }
+        return array;
+    }
+
+
+    codeInput.addEventListener('input', () => {
+      joinBtn.style.display = codeInput.value.trim() !== '' ? 'inline-block' : 'none';
+    });
+
+    function generateGameCode() {
+      const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+      let code = "";
+      for (let i = 0; i < 5; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return code;
+    }
+
+    function createGame() {
+      const hostName = prompt("Wat is je naam?");
+      if (!hostName) return;
+
+      showScreen("loadingScreen");
+
+      const code = generateGameCode();
+      currentGameCode = code;
+      isHost = true;
+      currentPlayersInLobby = [hostName];
+
+      
+      const shuffledNames = shuffleArray([...specificNamesPool]);
+
+      
+      const namesToAddCount = Math.min(5, shuffledNames.length);
+      for (let i = 0; i < namesToAddCount; i++) {
+          currentPlayersInLobby.push(shuffledNames[i]);
+      }
+
+      
+      setTimeout(() => {
+        showLobby(code, currentPlayersInLobby);
+      }, 500); 
+    }
+
+    async function showLobby(code, players) { 
+      showScreen("lobbyScreen"); 
+      document.getElementById("lobbyCode").textContent = "Spelcode: " + code;
+
+      const playerListEl = document.getElementById("playerList");
+      const playerCountEl = document.getElementById("playerCount");
+
+      playerListEl.innerHTML = ""; 
+      playerCountEl.textContent = `Spelers: 0/6`; 
+     
+      const delay = ms => new Promise(res => setTimeout(res, ms)); // Helper for delay
+
+      let currentDisplayedPlayers = 0;
+      for (const name of players) {
+        const li = document.createElement("li");
+        li.textContent = name;
+        playerListEl.appendChild(li);
+
+        currentDisplayedPlayers++;
+        playerCountEl.textContent = `Spelers: ${currentDisplayedPlayers}/6`; 
+
+        await delay(2000); 
+      }
+    }
+
+    function showScreen(idToShow) {
+      const screens = document.querySelectorAll('.screen');
+      screens.forEach(screen => {
+        screen.style.opacity = '0';
+        screen.style.pointerEvents = 'none';
+      });
+
+      const active = document.getElementById(idToShow);
+      active.style.opacity = '1';
+      active.style.pointerEvents = 'auto';
+    }
+
+    function startGame() {
+      if (!isHost) return alert("Alleen de host kan het spel starten.");
+      
+      if (currentPlayersInLobby.length < 2) {
+        return alert("Minimaal 2 spelers zijn nodig om het spel te starten.");
+      }
+
+      // Assign roles
+      const playersWithRoles = currentPlayersInLobby.map(name => ({ name: name, role: "Factchecker" }));
+
+      // Randomly select one player to be the Fakemaker
+      const fakemakerIndex = Math.floor(Math.random() * playersWithRoles.length);
+      playersWithRoles[fakemakerIndex].role = "Fakemaker";
+
+      // Find the host's role
+      const hostPlayer = playersWithRoles.find(player => player.name === currentPlayersInLobby[0]); // Assuming the host is always the first in the list
+      const hostRole = hostPlayer ? hostPlayer.role : "Unknown";
+
+      // Log all roles (for debugging/checking)
+      console.log("Assigned Roles:", playersWithRoles);
+
+      // Populate and show the role screen
+      document.getElementById('playerNameForRole').textContent = hostPlayer.name;
+      document.getElementById('roleText').textContent = hostRole;
+      showScreen("roleScreen");
+
+      // Get references to the new turn screen elements
+      const turnMessageContainer = document.getElementById('turnMessageContainer');
+      const turnMessageEl = document.getElementById('turnMessage');
+      const turnActionsEl = document.getElementById('turnActions');
+      const scanButtonEl = document.getElementById('scanButton');
+      const votingButtonsEl = document.getElementById('votingButtons');
+      const feedbackTextEl = document.getElementById('feedbackText');
+      const nextPlayerButtonEl = document.getElementById('turnActions').querySelector('button:last-child'); // Get the "Volgende Speler" button
+
+      // After 5 seconds, proceed to the turn screen
+      setTimeout(() => {
+        if (currentPlayersInLobby.length > 0) {
+          const startingPlayerName = currentPlayersInLobby[0]; // The host (first player) starts by default
+          document.getElementById('turnMessage').textContent = `${startingPlayerName} is aan de beurt`;
+          showScreen("turnScreen");
+        } else {
+          console.error("No players in lobby to start the turn.");
+          showScreen("mainMenu"); // Fallback if something went wrong
+        }
+      }, 5000); // 5000 milliseconds = 5 seconds
+
+      // Reset turn screen state for the new turn
+      scanButtonEl.style.display = 'block'; // Show camera button
+      votingButtonsEl.style.display = 'none'; // Hide voting buttons
+      feedbackTextEl.style.display = 'none'; // Hide feedback text
+      nextPlayerButtonEl.style.display = 'none'; // Hide next player button initially
+
+      // After showing the turn screen, wait a bit, animate the text, then show the actions
+      // This setTimeout runs *after* the first one has potentially shown the screen
+      // A better approach might be to chain these or use async/await in a dedicated function
+      // For simplicity now, we'll add another timeout that assumes the screen is visible
+      setTimeout(() => {
+          // Add class to trigger move-up animation
+          turnMessageContainer.classList.add('move-up');
+
+          // After animation duration, make actions visible
+          setTimeout(() => {
+              turnActionsEl.style.opacity = '1';
+              turnActionsEl.style.pointerEvents = 'auto';
+              // Only show the scan button initially within actions
+              scanButtonEl.style.display = 'block';
+              votingButtonsEl.style.display = 'none';
+              feedbackTextEl.style.display = 'none';
+              nextPlayerButtonEl.style.display = 'none'; // Ensure next player button is hidden
+          }, 500); // Match the CSS transition duration (0.5s)
+
+      }, 5500); // Start this sequence 5.5 seconds after startGame was called (0.5s after turnScreen is shown)
+    }
+
+    // --- Game Turn Logic ---
+
+    function scanQrCode() {
+        console.log("Scan QR Code clicked! (Simulating scan)");
+
+        // TODO: Replace with actual camera/QR scanning logic
+        // For now, simulate determining if it's Real or Fake
+        const isReal = Math.random() < 0.5; // 50% chance it's Real
+        currentTurnCorrectAnswer = isReal ? 'Real' : 'Fake';
+        console.log("Simulated scan result:", currentTurnCorrectAnswer);
+
+        // Hide scan button, show voting buttons
+        document.getElementById('scanButton').style.display = 'none';
+        const votingButtonsDiv = document.getElementById('votingButtons');
+        votingButtonsDiv.style.display = 'flex'; // Make the container a flex container
+        votingButtonsDiv.style.alignItems = 'center'; // Vertically align buttons in the center of the line
+        votingButtonsDiv.style.justifyContent = 'center'; // Center the buttons within the container
+        document.getElementById('feedbackText').style.display = 'none'; // Hide feedback if it was visible
+        document.getElementById('turnActions').querySelector('button:last-child').style.display = 'none'; // Hide Next Player button
+    }
+
+    function handleVote(playerVote) {
+        console.log("Player voted:", playerVote);
+
+        const feedbackTextEl = document.getElementById('feedbackText');
+        const nextPlayerButtonEl = document.getElementById('turnActions').querySelector('button:last-child');
+
+        // Determine if the vote was correct
+        const isCorrect = (playerVote === currentTurnCorrectAnswer);
+
+        // Display feedback
+        feedbackTextEl.textContent = isCorrect ? "ga 1 stap vooruit" : "ga 3 stappen terug";
+        feedbackTextEl.className = isCorrect ? 'correct-feedback' : 'wrong-feedback'; // Add class for color
+        feedbackTextEl.style.display = 'block'; // Show feedback text
+
+        // Hide voting buttons and show Next Player button
+        document.getElementById('votingButtons').style.display = 'none';
+        nextPlayerButtonEl.style.display = 'block'; // Show Next Player button
+    }
+    function joinGame() {
+      const code = codeInput.value.trim().toUpperCase();
+      const name = prompt("Wat is je naam?");
+      if (!code || !name) return alert("Vul een geldige code en naam in.");
+    }
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,42 @@
+[
+  {
+    "id": 1,
+    "type": "text",
+    "content": "Is de hoofdstad van Frankrijk Parijs?",
+    "answer": true,
+    "videoUrl": null,
+    "externalActionPrompt": null
+  },
+  {
+    "id": 2,
+    "type": "text",
+    "content": "Heeft een kat meer dan 9 levens?",
+    "answer": false,
+    "videoUrl": null,
+    "externalActionPrompt": null
+  },
+  {
+    "id": 3,
+    "type": "text",
+    "content": "Is water (H2O) een element?",
+    "answer": false,
+    "videoUrl": null,
+    "externalActionPrompt": null
+  },
+  {
+    "id": 4,
+    "type": "video",
+    "content": "Bekijk deze video. Is de bewering aan het einde waar?",
+    "answer": true,
+    "videoUrl": "https://www.w3schools.com/html/mov_bbb.mp4", 
+    "externalActionPrompt": null
+  },
+  {
+    "id": 5,
+    "type": "external_action",
+    "content": "Scan QR-code met nummer 5 met een ander toestel. Is de informatie die je ziet correct?",
+    "answer": true,
+    "videoUrl": null,
+    "externalActionPrompt": "Scan de QR code op het scherm."
+  }
+]
