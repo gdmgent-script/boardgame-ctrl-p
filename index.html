@@ -554,8 +554,7 @@
             return;
         }
         // Cycle through questions, or implement other logic for question selection
-        // For now, let's assume we might have more players than questions, so we loop questions
-        gameState.currentQuestionId = gameState.currentPlayerIndex % gameState.questions.length; 
+        gameState.currentQuestionId = (gameState.currentQuestionId + 1) % gameState.questions.length;
 
         updateTurnScreen();
         gameState.gamePhase = "turnStart";
@@ -578,7 +577,7 @@
             startNextTurn(); // Go to next turn or handle error
             return;
         }
-        questionNumberDisplay.textContent = `Vraag ${question.id}`;
+        questionNumberDisplay.textContent = `Vraag ${questionIndex}`;
         questionContentDisplay.textContent = question.content;
 
         // Clear previous dynamic content (like videos or QR prompts)
