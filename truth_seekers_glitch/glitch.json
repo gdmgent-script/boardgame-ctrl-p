@@ -1,0 +1,22 @@
+{
+  "install": "npm install express ws",
+  "start": "node server.js",
+  "watch": {
+    "ignore": [
+      "\\.git",
+      "node_modules/**/node_modules"
+    ],
+    "install": {
+      "include": [
+        "^package\\.json$",
+        "^\\.env$"
+      ]
+    },
+    "restart": {
+      "include": [
+        "^server\\.js$",
+        "^public/"
+      ]
+    }
+  }
+}

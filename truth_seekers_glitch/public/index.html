@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Truth Seekers - CTRL+P</title>
+  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700&family=Outfit:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Outfit', sans-serif;
+      height: 100vh;
+      background: linear-gradient(180deg, #4c6ef5, #a29bfe, #ff7675, #ffeaa7, #55efc4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      color: white;
+    }
+
+    .screen {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 1s ease;
+      text-align: center;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    #startScreen, #hostScreen, #joinScreen, #lobbyScreen, #roleCodeScreen, 
+    #waitingForPlayersScreen, #gameStartedScreen, #turnScreen, #waitingForTurnScreen, 
+    #questionScreen, #resultScreen, #gameOverScreen, #loadingScreen {
+      z-index: 1;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #startScreen {
+      z-index: 10;
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .logo-img {
+      width: 60%;
+      max-width: 250px;
+      margin-bottom: 20px;
+    }
+
+    input[type="text"] {
+      padding: 12px 20px;
+      border-radius: 25px;
+      border: none;
+      text-align: center;
+      width: 80%;
+      max-width: 300px;
+      font-size: 1rem;
+      margin-top: 10px;
+      margin-bottom: 10px;
+    }
+
+    button {
+      margin-top: 15px;
+      padding: 12px 24px;
+      border-radius: 20px;
+      border: none;
+      font-size: 1rem;
+      background: white;
+      color: #333;
+      font-family: 'Outfit', sans-serif;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+        background-color: #f0f0f0;
+    }
+
+    button:disabled {
+        background-color: #ccc;
+        cursor: not-allowed;
+    }
+
+    h1, h2 {
+        font-family: 'Unbounded', sans-serif;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      width: 80%;
+      max-width: 300px;
+    }
+
+    li {
+      background-color: rgba(255,255,255,0.2);
+      padding: 8px;
+      margin-bottom: 5px;
+      border-radius: 10px;
+    }
+
+    .game-code {
+      font-size: 2rem;
+      font-weight: bold;
+      letter-spacing: 3px;
+      margin: 15px 0;
+      background-color: rgba(255,255,255,0.2);
+      padding: 10px 20px;
+      border-radius: 10px;
+    }
+
+    .server-address {
+      font-size: 1rem;
+      margin-bottom: 15px;
+    }
+
+    .loading-spinner {
+      border: 5px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      border-top: 5px solid white;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Start Screen -->
+  <div id="startScreen" class="screen">
+    <img src="Truth_seekers_logo.png" alt="Truth Seekers Logo" class="logo-img">
+    <h1>CTRL+P</h1>
+    <p>Ontmasker de Fakemaker!</p>
+    <button id="createGameBtn">Host Game</button>
+    <button id="joinGameBtn">Join Game</button>
+  </div>
+
+  <!-- Host Screen -->
+  <div id="hostScreen" class="screen">
+    <h2>Host a Game</h2>
+    <p>Enter your name and share the game code with other players.</p>
+    <input type="text" id="hostName" placeholder="Your Name">
+    <p>Game Code:</p>
+    <div class="game-code" id="hostGameCode">XXXXX</div>
+    <p>Server Address:</p>
+    <div class="server-address" id="hostIpAddress">192.168.1.X:3000</div>
+    <p>Share this information with other players so they can join.</p>
+    <button id="hostStartBtn">Start Lobby</button>
+  </div>
+
+  <!-- Join Screen -->
+  <div id="joinScreen" class="screen">
+    <h2>Join a Game</h2>
+    <p>Enter your name, the game code, and server address to join.</p>
+    <input type="text" id="joinName" placeholder="Your Name">
+    <input type="text" id="joinGameCode" placeholder="Game Code (e.g., GSFCQ)">
+    <input type="text" id="joinServerAddress" placeholder="Server Address (e.g., 192.168.1.5:3000)">
+    <button id="joinStartBtn">Join Game</button>
+  </div>
+
+  <!-- Loading Screen -->
+  <div id="loadingScreen" class="screen">
+    <h2>Connecting...</h2>
+    <div class="loading-spinner"></div>
+    <p>Please wait while we connect to the game server.</p>
+  </div>
+
+  <!-- Lobby Screen -->
+  <div id="lobbyScreen" class="screen">
+    <h2>Game Lobby</h2>
+    <p id="playerCount">Players: 0/6</p>
+    <ul id="playerList">
+      <!-- Player list will be populated here -->
+    </ul>
+    <p>Waiting for all players to join...</p>
+    <button id="startGameBtn" style="display: none;">Start Game</button>
+  </div>
+
+  <!-- Role Code Screen -->
+  <div id="roleCodeScreen" class="screen">
+    <h2>Enter Your Role Code</h2>
+    <p>Look at your physical role card and enter the code.</p>
+    <input type="text" id="roleCodeInput" placeholder="Role Code (e.g., 1288)">
+    <button id="submitRoleCodeBtn">Submit</button>
+  </div>
+
+  <!-- Waiting for Players Screen -->
+  <div id="waitingForPlayersScreen" class="screen">
+    <h2>Role Confirmed</h2>
+    <p>Your role: <strong id="myRoleDisplay"></strong></p>
+    <p>Waiting for all players to enter their role codes...</p>
+    <button id="startGameAfterRolesBtn" style="display: none;">Start Game</button>
+  </div>
+
+  <!-- Game Started Screen -->
+  <div id="gameStartedScreen" class="screen">
+    <h2>Game Started!</h2>
+    <p>The first player is: <strong id="firstPlayerName"></strong></p>
+    <p>Pass the device to the current player when it's your turn.</p>
+  </div>
+
+  <!-- Turn Screen -->
+  <div id="turnScreen" class="screen">
+    <h2 id="currentPlayerTurn">Your Turn</h2>
+    <div id="visibleAnswer" style="display: none;">
+        <p>Rol: <strong id="currentPlayerRoleText"></strong></p>
+        <p>Antwoord op vraag <strong id="currentQuestionNumberText"></strong>: <strong id="currentQuestionAnswerText"></strong></p>
+        <p style="font-size:0.8em;">(Deze informatie is alleen voor jou!)</p>
+    </div>  
+    <button id="showQuestionBtn">Toon Vraag</button>
+  </div>
+
+  <!-- Waiting for Turn Screen -->
+  <div id="waitingForTurnScreen" class="screen">
+    <h2>Waiting for Turn</h2>
+    <p>Current player: <strong id="currentPlayerName"></strong></p>
+    <p>Please wait for your turn...</p>
+  </div>
+
+  <!-- Question Screen -->
+  <div id="questionScreen" class="screen">
+    <h3 id="questionNumberDisplay">Vraag X</h3>
+    <p id="questionContentDisplay">Dit is de vraag...</p>
+    <!-- Video / External Action elements will be added here if needed -->
+    <div id="answerButtons">
+        <button onclick="submitAnswer(true)">Waar</button>
+        <button onclick="submitAnswer(false)">Fout</button>
+    </div>
+  </div>
+
+  <!-- Result Screen -->
+  <div id="resultScreen" class="screen">
+    <h2 id="resultTitle"></h2>
+    <p id="resultFeedback"></p>
+    <p id="fakemakerStatus"></p>
+    <button id="nextTurnBtn">Volgende Speler</button>
+    <button id="attemptUnmaskBtn">Ontmasker Fakemaker?</button> 
+  </div>
+
+  <!-- Game Over Screen -->
+  <div id="gameOverScreen" class="screen">
+    <h2>Spel Voorbij!</h2>
+    <p id="gameOverReason"></p>
+    <button id="restartGameBtn">Nieuw Spel</button>
+  </div>
+
+  <script src="client.js"></script>
+</body>
+</html>
